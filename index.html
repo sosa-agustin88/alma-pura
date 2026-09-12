@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Urbano</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>CATÁLOGO</h1>
+        <p>Urbano & Elegante Sport</p>
+    </header>
+
+    <main>
+        <div id="product-grid" class="grid">
+            <!-- Los productos se inyectarán aquí vía JS -->
+        </div>
+    </main>
+
+    <!-- Botón flotante del carrito -->
+    <button id="cart-btn" class="floating-cart" onclick="toggleCart()">
+        🛒 <span id="cart-count">0</span>
+    </button>
+
+    <!-- Modal Detalles del Producto -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModals()">&times;</span>
+            <img id="modal-img" src="" alt="Producto">
+            <h2 id="modal-title"></h2>
+            <p id="modal-desc"></p>
+            <h3 id="modal-price"></h3>
+            <button id="modal-add-btn" class="btn-primary">Sumar al carrito</button>
+        </div>
+    </div>
+
+    <!-- Panel lateral del Carrito -->
+    <div id="cart-panel" class="side-panel">
+        <span class="close-panel" onclick="toggleCart()">&times;</span>
+        <h2>Tu Pedido</h2>
+        <div id="cart-items"></div>
+        <div class="cart-footer">
+            <h3>Total: $<span id="cart-total">0</span></h3>
+            <button class="btn-whatsapp" onclick="checkout()">Pedir al vendedor</button>
+        </div>
+    </div>
+
+    <!-- Modal de Admin Login / Edición -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content admin-content">
+            <span class="close" onclick="closeModals()">&times;</span>
+            <div id="admin-login-view">
+                <h2>Acceso Admin</h2>
+                <input type="password" id="admin-pass" placeholder="Contraseña">
+                <button class="btn-primary" onclick="loginAdmin()">Ingresar</button>
+            </div>
+            <div id="admin-dashboard-view" style="display: none;">
+                <h2>Gestión de Productos</h2>
+                <input type="text" id="new-img" placeholder="URL de la imagen">
+                <input type="text" id="new-title" placeholder="Título">
+                <input type="text" id="new-desc" placeholder="Descripción (Talles/Colores)">
+                <input type="number" id="new-price" placeholder="Precio">
+                <button class="btn-primary" onclick="addProduct()">Agregar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
