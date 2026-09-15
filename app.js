@@ -1,39 +1,45 @@
-// 1. TUS CLAVES DE ACCESO REALES
 const firebaseConfig = {
     apiKey: "AIzaSyCxrukHLdj-KTPNZlcDEd9VpVz8ewwmiK0",
     authDomain: "alma-pura-ced10.firebaseapp.com",
     projectId: "alma-pura-ced10",
     storageBucket: "alma-pura-ced10.firebasestorage.app",
     messagingSenderId: "815859897172",
-    appId: "1:815859897172:web:d8bbe8158d439ed27f2ec1",
-    measurementId: "G-FQJ8PZLRVV"
+    appId: "1:815859897172:web:d8bbe8158d439ed27f2ec1"
 };
 const IMGBB_API_KEY = "3052862c887588cf31e3baec2a6eb3f0";
 
-// 2. INICIALIZAR FIREBASE
+// CONFIGURA AQUÍ TU TELÉFONO DE WHATSAPP (con código de país)
+const TELEFONO_WHATSAPP = "5493644000000"; 
+const CLAVE_ADMIN = "1234"; // Cambia esta contraseña por la que quieras
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 3. ABRIR Y CERRAR EL PANEL DE ADMINISTRADOR
 const btnAbrirAdmin = document.getElementById('btn-abrir-admin');
 const btnCerrarAdmin = document.getElementById('btn-cerrar-admin');
 const panelAdmin = document.getElementById('panel-admin');
 
-btnAbrirAdmin.addEventListener('click', () => panelAdmin.classList.add('open'));
+// 1. CONTROL DE ACCESO CON CONTRASEÑA
+btnAbrirAdmin.addEventListener('click', () => {
+    const password = prompt("Ingrese la contraseña de administrador:");
+    if (password === CLAVE_ADMIN) {
+        panelAdmin.classList.add('open');
+    } else if (password !== null) {
+        alert("Contraseña incorrecta.");
+    }
+});
+
 btnCerrarAdmin.addEventListener('click', () => panelAdmin.classList.remove('open'));
 
-// 4. LÓGICA PARA AGREGAR UN PRODUCTO NUEVO
+// 2. AGREGAR PRODUCTO
 const btnAgregar = document.getElementById('btn-agregar-producto');
 const inputImagen = document.getElementById('img-file');
 const inputTitulo = document.getElementById('input-titulo');
 const inputPrecio = document.getElementById('input-precio');
 const labelImagen = document.querySelector('.file-upload-label');
 
-// Cambiar el texto cuando se elige una foto
 inputImagen.addEventListener('change', () => {
-    if(inputImagen.files.length > 0) {
-        labelImagen.innerText = "✅ Foto seleccionada";
-    }
+    if(inputImagen.files.length > 0) labelImagen.innerText = "✅ Foto seleccionada";
 });
 
 btnAgregar.addEventListener('click', async () => {
@@ -42,15 +48,14 @@ btnAgregar.addEventListener('click', async () => {
     const precio = inputPrecio.value;
 
     if (!archivo || !titulo || !precio) {
-        alert("Por favor completa todos los campos y selecciona una imagen.");
+        alert("Completa todos los campos y selecciona una imagen.");
         return;
     }
 
-    btnAgregar.innerText = "Subiendo imagen... paciencia";
+    btnAgregar.innerText = "Subiendo imagen...";
     btnAgregar.disabled = true;
 
     try {
-        // A) Subir a ImgBB
         const formData = new FormData();
         formData.append("image", archivo);
         
@@ -60,39 +65,32 @@ btnAgregar.addEventListener('click', async () => {
         });
         const datosImg = await respuestaImg.json();
         
-        if (!datosImg.success) throw new Error("Error en ImgBB");
+        if (!datosImg.success) throw new Error("Error en servidor de imágenes");
         
-        const urlImagen = datosImg.data.url;
-
-        btnAgregar.innerText = "Guardando datos...";
-
-        // B) Guardar en Firestore
         await db.collection("productos").add({
             titulo: titulo,
             precio: Number(precio),
-            imagenUrl: urlImagen,
+            imagenUrl: datosImg.data.url,
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert("¡Producto agregado con éxito!");
-        
-        // Limpiar el formulario
+        alert("¡Producto publicado correctamente!");
         inputImagen.value = "";
         labelImagen.innerText = "📸 Seleccionar foto";
         inputTitulo.value = "";
         inputPrecio.value = "";
-        panelAdmin.classList.remove('open'); // Cerramos el panel al terminar
+        panelAdmin.classList.remove('open');
         
     } catch (error) {
-        console.error("Error: ", error);
-        alert("Hubo un error al subir el producto.");
+        console.error("Error detallado:", error);
+        alert("Error al guardar: " + error.message);
     } finally {
         btnAgregar.innerText = "Agregar Producto";
         btnAgregar.disabled = false;
     }
 });
 
-// 5. LÓGICA PARA MOSTRAR LOS PRODUCTOS EN LA WEB
+// 3. MOSTRAR TIENDA Y BOTÓN WHATSAPP
 const gridProductos = document.getElementById('grid-productos');
 
 function cargarProductos() {
@@ -100,25 +98,28 @@ function cargarProductos() {
         gridProductos.innerHTML = ""; 
         
         if (querySnapshot.empty) {
-            gridProductos.innerHTML = "<p>No hay prendas disponibles por ahora.</p>";
+            gridProductos.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No hay productos cargados todavía.</p>";
             return;
         }
 
         querySnapshot.forEach((doc) => {
             const producto = doc.data();
             const id = doc.id;
+            
+            const mensajeWA = encodeURIComponent(`Hola, me interesa encargar: ${producto.titulo} ($${producto.precio})`);
+            const urlWA = `https://wa.me/${TELEFONO_WHATSAPP}?text=${mensajeWA}`;
 
             const div = document.createElement('div');
             div.className = 'product-card';
             div.innerHTML = `
                 <div class="admin-actions">
-                    <button class="btn-edit" onclick="alert('Editar en desarrollo')">✏️</button>
                     <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
                 </div>
                 <img src="${producto.imagenUrl}" alt="${producto.titulo}" class="product-img">
                 <div class="product-info">
                     <h3 class="product-title">${producto.titulo}</h3>
                     <p class="product-price">$${producto.precio}</p>
+                    <a href="${urlWA}" target="_blank" class="btn-wa">📲 Pedir por WhatsApp</a>
                 </div>
             `;
             gridProductos.appendChild(div);
@@ -126,9 +127,8 @@ function cargarProductos() {
     });
 }
 
-// Función básica para eliminar (la conectamos a Firestore)
 async function eliminarProducto(id) {
-    if(confirm("¿Estás seguro de eliminar esta prenda?")) {
+    if(confirm("¿Eliminar este producto?")) {
         await db.collection("productos").doc(id).delete();
     }
 }
