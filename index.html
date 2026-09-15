@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alma Pura</title>
-    <!-- Vinculamos el CSS y el Manifest para la App -->
-    <link rel="stylesheet" href="styles_2.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <header>
         <h1>Alma Pura</h1>
-        <button id="btn-abrir-admin">Administrador</button>
+        <button id="btn-abrir-admin">🔑 Admin</button>
     </header>
 
     <main>
-        <!-- Aquí adentro van a aparecer los productos mágicamente -->
         <div class="grid" id="grid-productos"></div>
     </main>
 
@@ -32,20 +30,6 @@
             <input type="number" id="input-precio" placeholder="Precio ($)">
             
             <button id="btn-agregar-producto">Agregar Producto</button>
-
-            <!-- Historial de Ventas -->
-            <div class="sales-log-section">
-                <h3>Historial de Ventas</h3>
-                <div class="sales-header">
-                    <span>Prenda</span>
-                    <span>Fecha</span>
-                    <span>Precio</span>
-                </div>
-                <ul id="sales-list"></ul>
-                <div class="sales-total">
-                    <strong>Recaudado:</strong> <span id="total-month">$0</span>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -53,18 +37,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
 
-    <!-- Registro del Service Worker (Para que se pueda instalar la App) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('App lista para instalarse'))
-                    .catch(err => console.error('Error en PWA', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
     </script>
-    
-    <!-- Tu lógica en JS -->
     <script src="app.js"></script>
 </body>
 </html>
