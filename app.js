@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCxrukHldj-KTPNZlcdEd9vpVz8ewwmiK8",
@@ -14,12 +13,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 let products = [];
 let cart = [];
 let isAdmin = false;
-const VENDEDOR_PHONE = "5491100000000"; // Reemplaza por tu número
+const VENDEDOR_PHONE = "5491100000000"; // Cambiar por tu número
 
 onSnapshot(collection(db, "products"), (snapshot) => {
     products = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
@@ -53,12 +51,10 @@ function renderProducts() {
 window.openProduct = (id) => {
     const p = products.find(prod => prod.firebaseId === id);
     if(!p) return;
-
     document.getElementById('modal-img').src = p.img;
     document.getElementById('modal-title').textContent = p.title;
     document.getElementById('modal-desc').textContent = p.desc;
     document.getElementById('modal-price').textContent = `$${p.price}`;
-    
     document.getElementById('modal-add-btn').onclick = () => window.addToCart(p);
     document.getElementById('product-modal').style.display = 'flex';
 }
@@ -141,43 +137,32 @@ window.loginAdmin = () => {
     }
 }
 
+// Guardar producto con URL
 window.addProduct = async () => {
-    const fileInput = document.getElementById('new-img-file');
+    const imgUrl = document.getElementById('new-img-url').value;
     const title = document.getElementById('new-title').value;
     const desc = document.getElementById('new-desc').value;
     const price = parseInt(document.getElementById('new-price').value);
 
-    if (!fileInput.files.length || !title || !price) {
-        return alert("Por favor, completa el título, el precio y selecciona una foto.");
+    if (!imgUrl || !title || !price) {
+        return alert("Completa el título, el precio y el enlace de la imagen.");
     }
 
     const btn = document.getElementById('btn-add-product');
-    btn.innerText = "Subiendo imagen...";
+    btn.innerText = "Guardando...";
     btn.disabled = true;
 
     try {
-        const file = fileInput.files[0];
-        const storageReference = ref(storage, 'productos/' + Date.now() + '_' + file.name);
-        await uploadBytes(storageReference, file);
-        
-        const imgUrl = await getDownloadURL(storageReference);
-
         await addDoc(collection(db, "products"), { 
-            title: title, 
-            desc: desc, 
-            price: price, 
-            img: imgUrl 
+            title: title, desc: desc, price: price, img: imgUrl 
         });
-
-        alert('¡Producto agregado con éxito!');
-        
-        fileInput.value = '';
+        alert('¡Producto agregado!');
+        document.getElementById('new-img-url').value = '';
         document.getElementById('new-title').value = '';
         document.getElementById('new-desc').value = '';
         document.getElementById('new-price').value = '';
     } catch (error) {
-        console.error("Error al subir el producto:", error);
-        alert("Hubo un error al guardar el producto.");
+        alert("Hubo un error al guardar.");
     } finally {
         btn.innerText = "Agregar Producto";
         btn.disabled = false;
@@ -185,34 +170,19 @@ window.addProduct = async () => {
 }
 
 window.deleteProduct = async (id) => {
-    if(confirm('¿Estás seguro de eliminar este producto?')) {
-        try {
-            await deleteDoc(doc(db, "products", id));
-        } catch(error) {
-            console.error("Error al eliminar:", error);
-            alert("No se pudo eliminar el producto.");
-        }
+    if(confirm('¿Seguro que quieres eliminar este producto?')) {
+        await deleteDoc(doc(db, "products", id));
     }
 }
 
 window.addSale = async () => {
     const client = document.getElementById('sale-client').value;
     const amount = parseFloat(document.getElementById('sale-amount').value);
+    if (!client || !amount) return;
 
-    if (!client || !amount) return alert("Por favor, ingresa el cliente y el monto.");
-
-    try {
-        await addDoc(collection(db, "sales"), {
-            client: client,
-            amount: amount,
-            date: new Date().toISOString()
-        });
-
-        document.getElementById('sale-client').value = '';
-        document.getElementById('sale-amount').value = '';
-    } catch (error) {
-        console.error("Error al registrar venta:", error);
-    }
+    await addDoc(collection(db, "sales"), { client, amount, date: new Date().toISOString() });
+    document.getElementById('sale-client').value = '';
+    document.getElementById('sale-amount').value = '';
 }
 
 function listenToSales() {
@@ -227,18 +197,11 @@ function listenToSales() {
         snapshot.forEach(docSnap => {
             const sale = docSnap.data();
             const saleDate = new Date(sale.date);
-
             if (saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
                 monthTotal += sale.amount;
-                salesList.innerHTML += `
-                    <li>
-                        <span><b>${sale.client}</b></span> 
-                        <span>$${sale.amount}</span>
-                    </li>
-                `;
+                salesList.innerHTML += `<li><span><b>${sale.client}</b></span> <span>$${sale.amount}</span></li>`;
             }
         });
-
         document.getElementById('month-total').innerText = monthTotal;
     });
 }
