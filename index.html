@@ -3,98 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alma Pura - Catálogo</title>
-    
-    <!-- Configuración PWA -->
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#000000">
-    <link rel="apple-touch-icon" href="./icon-192x192.png">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css">
+    <title>Alma Pura</title>
+    <!-- Vinculamos el CSS y el Manifest para la App -->
+    <link rel="stylesheet" href="styles_2.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <header>
-        <h1>ALMA PURA</h1>
-        <p>DISFRAZATE DE VOS MISMO ;)</p>
-        <div id="admin-trigger" onclick="window.triggerAdmin()"></div>
+        <h1>Alma Pura</h1>
+        <button id="btn-abrir-admin">Administrador</button>
     </header>
 
     <main>
-        <div id="product-grid" class="grid"></div>
+        <!-- Aquí adentro van a aparecer los productos mágicamente -->
+        <div class="grid" id="grid-productos"></div>
     </main>
 
-    <button id="cart-btn" class="floating-cart" onclick="window.toggleCart()">
-        🛒 <span id="cart-count">0</span>
-    </button>
-
-    <!-- Modal de Producto -->
-    <div id="product-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="window.closeModals()">&times;</span>
-            <img id="modal-img" src="" alt="Producto">
-            <h2 id="modal-title"></h2>
-            <p id="modal-desc"></p>
-            <h3 id="modal-price"></h3>
-            <button id="modal-add-btn" class="btn-primary">Sumar al carrito</button>
-        </div>
-    </div>
-
-    <!-- Panel Lateral del Carrito -->
-    <div id="cart-panel" class="side-panel">
-        <span class="close-panel" onclick="window.toggleCart()">&times;</span>
-        <h2>Tu Pedido</h2>
-        <div id="cart-items"></div>
-        <div class="cart-footer">
-            <h3>Total: $<span id="cart-total">0</span></h3>
-            <button class="btn-whatsapp" onclick="window.checkout()">Pedir al vendedor</button>
-        </div>
-    </div>
-
-    <!-- Modal de Administrador -->
-    <div id="admin-modal" class="modal">
-        <div class="modal-content admin-content">
-            <span class="close" onclick="window.closeModals()">&times;</span>
+    <!-- Panel Lateral de Administrador -->
+    <div id="panel-admin" class="side-panel">
+        <div class="panel-content">
+            <span id="btn-cerrar-admin" class="close-btn">&times;</span>
+            <h2>Agregar Producto</h2>
             
-            <div id="admin-login-view">
-                <h2>Acceso Admin</h2>
-                <input type="password" id="admin-pass" placeholder="Contraseña">
-                <button class="btn-primary" onclick="window.loginAdmin()">Ingresar</button>
-            </div>
+            <label for="img-file" class="file-upload-label">📸 Seleccionar foto</label>
+            <input type="file" id="img-file" accept="image/*" class="file-input">
+            
+            <input type="text" id="input-titulo" placeholder="Título de la prenda">
+            <input type="number" id="input-precio" placeholder="Precio ($)">
+            
+            <button id="btn-agregar-producto">Agregar Producto</button>
 
-            <div id="admin-dashboard-view" style="display: none;">
-                <h2>Gestión de Productos</h2>
-                <input type="text" id="new-img-url" placeholder="URL o ruta de la imagen (Ej: https://...)">
-                <input type="text" id="new-title" placeholder="Título del producto">
-                <input type="text" id="new-desc" placeholder="Descripción (Talles/Colores)">
-                <input type="number" id="new-price" placeholder="Precio ($)">
-                <button class="btn-primary" id="btn-add-product" onclick="window.addProduct()">Agregar Producto</button>
-                
-                <div class="sales-section">
-                    <h2>Resumen de Ventas</h2>
-                    <input type="text" id="sale-client" placeholder="Nombre o número del cliente">
-                    <input type="number" id="sale-amount" placeholder="Monto total ($)">
-                    <button class="btn-whatsapp" onclick="window.addSale()">Registrar Venta</button>
-                    
-                    <div class="monthly-summary">
-                        <h3>Recaudado este mes: $<span id="month-total">0</span></h3>
-                        <ul id="sales-list"></ul>
-                    </div>
+            <!-- Historial de Ventas -->
+            <div class="sales-log-section">
+                <h3>Historial de Ventas</h3>
+                <div class="sales-header">
+                    <span>Prenda</span>
+                    <span>Fecha</span>
+                    <span>Precio</span>
+                </div>
+                <ul id="sales-list"></ul>
+                <div class="sales-total">
+                    <strong>Recaudado:</strong> <span id="total-month">$0</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Registro del Service Worker para PWA -->
+    <!-- Librerías de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
+
+    <!-- Registro del Service Worker (Para que se pueda instalar la App) -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js');
-        });
-      }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('App lista para instalarse'))
+                    .catch(err => console.error('Error en PWA', err));
+            });
+        }
     </script>
-    <script type="module" src="./app.js"></script>
+    
+    <!-- Tu lógica en JS -->
+    <script src="app.js"></script>
 </body>
 </html>
