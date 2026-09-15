@@ -4,46 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alma Pura</title>
+    <!-- Vinculación corregida a style.css -->
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <header>
-        <h1>Alma Pura</h1>
-        <button id="btn-abrir-admin">🔑 Admin</button>
+
+    <!-- Encabezado Centrado -->
+    <header class="navbar">
+        <div class="logo-container">
+            <!-- Si tenés un logo en la raíz del repo (ej: logo.png o logo.jpg) -->
+            <img src="logo.png" alt="Alma Pura Logo" class="brand-logo" onerror="this.style.display='none'">
+            <h1 class="brand-title">Alma Pura</h1>
+        </div>
+        <button id="btn-abrir-admin" class="btn-admin">🔑 Admin</button>
     </header>
 
-    <main>
-        <div class="grid" id="grid-productos"></div>
+    <!-- Catálogo de Productos -->
+    <main class="container">
+        <div id="grid-productos" class="product-grid"></div>
     </main>
 
-    <!-- Panel Lateral de Administrador -->
-    <div id="panel-admin" class="side-panel">
-        <div class="panel-content">
-            <span id="btn-cerrar-admin" class="close-btn">&times;</span>
-            <h2>Agregar Producto</h2>
-            
-            <label for="img-file" class="file-upload-label">📸 Seleccionar foto</label>
-            <input type="file" id="img-file" accept="image/*" class="file-input">
-            
-            <input type="text" id="input-titulo" placeholder="Título de la prenda">
-            <input type="number" id="input-precio" placeholder="Precio ($)">
-            
-            <button id="btn-agregar-producto">Agregar Producto</button>
+    <!-- Botón Flotante del Carrito -->
+    <div id="btn-carrito-flotante" class="cart-floating-btn">
+        🛒 <span id="cart-count">0</span>
+    </div>
+
+    <!-- Modal del Carrito -->
+    <div id="modal-carrito" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tu Carrito</h2>
+                <button id="btn-cerrar-carrito" class="btn-close">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items-list"></div>
+            <div class="cart-footer">
+                <p class="cart-total">Total: $<span id="cart-total-price">0</span></p>
+                <button id="btn-enviar-pedido-wa" class="btn-wa-checkout">💬 Enviar Pedido por WhatsApp</button>
+            </div>
         </div>
     </div>
 
-    <!-- Librerías de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
+    <!-- Panel de Administración Lateral -->
+    <div id="panel-admin" class="admin-panel">
+        <div class="panel-header">
+            <h2 id="modal-title">Agregar Producto</h2>
+            <button id="btn-cerrar-admin" class="btn-close">&times;</button>
+        </div>
+        
+        <div class="form-group">
+            <input type="file" id="img-file" accept="image/*" class="file-input">
+            <label for="img-file" class="file-upload-label">📸 Seleccionar foto</label>
+        </div>
+        
+        <div class="form-group">
+            <input type="text" id="input-titulo" placeholder="Título de la prenda / producto">
+        </div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-            });
-        }
-    </script>
+        <div class="form-group">
+            <input type="number" id="input-precio" placeholder="Precio ($)">
+        </div>
+
+        <button id="btn-agregar-producto" class="btn-submit">Agregar Producto</button>
+    </div>
+
+    <!-- Firebase y Lógica -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
