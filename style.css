@@ -1,0 +1,32 @@
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background: #f8f9fa; color: #333; }
+
+header { background: #111; color: #fff; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+header h1 { font-size: 1.4rem; font-weight: 600; }
+header button { background: #333; color: #fff; border: 1px solid #555; padding: 8px 14px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; }
+
+/* Grilla de productos */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 15px; max-width: 1200px; margin: 0 auto; }
+.product-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; display: flex; flex-direction: column; justify-content: space-between; }
+.product-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+.product-info { padding: 12px; text-align: center; }
+.product-title { font-size: 0.95rem; margin-bottom: 6px; color: #444; }
+.product-price { font-weight: bold; color: #2e7d32; font-size: 1.1rem; margin-bottom: 10px; }
+
+/* Botón WhatsApp */
+.btn-wa { display: block; background: #25D366; color: white; text-decoration: none; padding: 8px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; text-align: center; margin-top: 5px; }
+
+/* Acciones Admin */
+.admin-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; z-index: 10; }
+.btn-del { background: rgba(255, 77, 77, 0.9); color: white; border: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+
+/* Panel Lateral Oculto */
+.side-panel { position: fixed; top: 0; right: -100%; width: 320px; max-width: 85%; height: 100%; background: #fff; box-shadow: -4px 0 15px rgba(0,0,0,0.15); transition: right 0.3s ease-in-out; z-index: 1000; overflow-y: auto; }
+.side-panel.open { right: 0; }
+.panel-content { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+.close-btn { align-self: flex-end; font-size: 1.8rem; cursor: pointer; color: #888; }
+
+.file-input { display: none; }
+.file-upload-label { display: block; padding: 12px; background: #f0f0f0; text-align: center; border: 2px dashed #bbb; border-radius: 8px; cursor: pointer; font-weight: 500; }
+input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+#btn-agregar-producto { width: 100%; padding: 12px; background: #111; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
