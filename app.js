@@ -8,14 +8,16 @@ const firebaseConfig = {
 };
 const IMGBB_API_KEY = "3052862c887588cf31e3baec2a6eb3f0";
 const TELEFONO_WHATSAPP = "5493644000000"; // Reemplaza por tu número
-const CLAVE_ADMIN = "1234"; 
+const CLAVE_ADMIN = "1234";
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let esAdmin = false;
 let productoEditandoId = null;
+let carrito = [];
 
+// Elementos DOM
 const btnAbrirAdmin = document.getElementById('btn-abrir-admin');
 const btnCerrarAdmin = document.getElementById('btn-cerrar-admin');
 const panelAdmin = document.getElementById('panel-admin');
@@ -24,14 +26,24 @@ const inputImagen = document.getElementById('img-file');
 const inputTitulo = document.getElementById('input-titulo');
 const inputPrecio = document.getElementById('input-precio');
 const labelImagen = document.querySelector('.file-upload-label');
+const gridProductos = document.getElementById('grid-productos');
 
-// CONTROL DE ACCESO
+// Elementos Carrito
+const btnCarritoFlotante = document.getElementById('btn-carrito-flotante');
+const modalCarrito = document.getElementById('modal-carrito');
+const btnCerrarCarrito = document.getElementById('btn-cerrar-carrito');
+const cartItemsContainer = document.getElementById('cart-items');
+const cartCountSpan = document.getElementById('cart-count');
+const cartTotalPriceSpan = document.getElementById('cart-total-price');
+const btnEnviarPedidoWA = document.getElementById('btn-enviar-pedido-wa');
+
+// GESTIÓN DEL PANEL ADMIN
 btnAbrirAdmin.addEventListener('click', () => {
     if (!esAdmin) {
         const password = prompt("Ingrese la contraseña de administrador:");
         if (password === CLAVE_ADMIN) {
             esAdmin = true;
-            btnAbrirAdmin.innerText = "⚙️ Panel Admin";
+            btnAbrirAdmin.innerText = "⚙️ Panel";
             panelAdmin.classList.add('open');
             cargarProductos();
         } else if (password !== null) {
@@ -51,7 +63,7 @@ inputImagen.addEventListener('change', () => {
     if(inputImagen.files.length > 0) labelImagen.innerText = "✅ Foto seleccionada";
 });
 
-// GUARDAR O EDITAR PRODUCTO
+// ABM PRODUCTOS
 btnAgregar.addEventListener('click', async () => {
     const archivo = inputImagen.files[0];
     const titulo = inputTitulo.value.trim();
@@ -80,19 +92,13 @@ btnAgregar.addEventListener('click', async () => {
         }
 
         if (productoEditandoId) {
-            // MODO EDICIÓN
-            const datosActualizar = {
-                titulo: titulo,
-                precio: Number(precio)
-            };
+            const datosActualizar = { titulo: titulo, precio: Number(precio) };
             if (urlImagen) datosActualizar.imagenUrl = urlImagen;
-
             await db.collection("productos").doc(productoEditandoId).update(datosActualizar);
             alert("¡Producto actualizado!");
         } else {
-            // MODO CREACIÓN
             if (!urlImagen) {
-                alert("Selecciona una imagen para el nuevo producto.");
+                alert("Selecciona una imagen para el producto.");
                 btnAgregar.innerText = "Agregar Producto";
                 btnAgregar.disabled = false;
                 return;
@@ -108,21 +114,17 @@ btnAgregar.addEventListener('click', async () => {
 
         resetearFormulario();
         panelAdmin.classList.remove('open');
-        
     } catch (error) {
-        console.error("Error:", error);
-        alert("Error al guardar: " + error.message);
+        alert("Error: " + error.message);
     } finally {
         btnAgregar.disabled = false;
     }
 });
 
-// CARGAR PRODUCTOS EN TIENDA
-const gridProductos = document.getElementById('grid-productos');
-
+// CARGAR CATALOGO
 function cargarProductos() {
     db.collection("productos").orderBy("fecha", "desc").onSnapshot((querySnapshot) => {
-        gridProductos.innerHTML = ""; 
+        gridProductos.innerHTML = "";
         
         if (querySnapshot.empty) {
             gridProductos.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No hay productos disponibles.</p>";
@@ -130,15 +132,12 @@ function cargarProductos() {
         }
 
         querySnapshot.forEach((doc) => {
-            const producto = doc.data();
+            const p = doc.data();
             const id = doc.id;
-            
-            const mensajeWA = encodeURIComponent(`Hola, me interesa encargar: ${producto.titulo} ($${producto.precio})`);
-            const urlWA = `https://wa.me/${TELEFONO_WHATSAPP}?text=${mensajeWA}`;
 
-            const accionesAdminHTML = esAdmin ? `
+            const accionesAdmin = esAdmin ? `
                 <div class="admin-actions">
-                    <button class="btn-edit" onclick="prepararEdicion('${id}', '${producto.titulo}', ${producto.precio})">✏️</button>
+                    <button class="btn-edit" onclick="prepararEdicion('${id}', '${p.titulo}', ${p.precio})">✏️</button>
                     <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
                 </div>
             ` : '';
@@ -146,12 +145,12 @@ function cargarProductos() {
             const div = document.createElement('div');
             div.className = 'product-card';
             div.innerHTML = `
-                ${accionesAdminHTML}
-                <img src="${producto.imagenUrl}" alt="${producto.titulo}" class="product-img">
+                ${accionesAdmin}
+                <img src="${p.imagenUrl}" alt="${p.titulo}" class="product-img">
                 <div class="product-info">
-                    <h3 class="product-title">${producto.titulo}</h3>
-                    <p class="product-price">$${producto.precio}</p>
-                    <a href="${urlWA}" target="_blank" class="btn-wa">📲 Pedir por WhatsApp</a>
+                    <h3 class="product-title">${p.titulo}</h3>
+                    <p class="product-price">$${p.precio}</p>
+                    <button class="btn-add-cart" onclick="agregarAlCarrito('${p.titulo}', ${p.precio})">🛒 Agregar</button>
                 </div>
             `;
             gridProductos.appendChild(div);
@@ -159,7 +158,57 @@ function cargarProductos() {
     });
 }
 
-// PREPARAR EDICIÓN
+// LÓGICA DEL CARRITO
+window.agregarAlCarrito = (titulo, precio) => {
+    carrito.push({ titulo, precio });
+    actualizarCarritoUI();
+};
+
+function actualizarCarritoUI() {
+    cartCountSpan.innerText = carrito.length;
+    cartItemsContainer.innerHTML = "";
+    let total = 0;
+
+    carrito.forEach((prod, index) => {
+        total += prod.precio;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'cart-item';
+        itemDiv.innerHTML = `
+            <span>${prod.titulo} - $${prod.precio}</span>
+            <button onclick="quitarDelCarrito(${index})" style="border:none; background:none; cursor:pointer;">❌</button>
+        `;
+        cartItemsContainer.appendChild(itemDiv);
+    });
+
+    cartTotalPriceSpan.innerText = total;
+}
+
+window.quitarDelCarrito = (index) => {
+    carrito.splice(index, 1);
+    actualizarCarritoUI();
+};
+
+btnCarritoFlotante.addEventListener('click', () => modalCarrito.classList.add('open'));
+btnCerrarCarrito.addEventListener('click', () => modalCarrito.classList.remove('open'));
+
+btnEnviarPedidoWA.addEventListener('click', () => {
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+    let texto = "Hola, me gustaría encargar los siguientes productos:\n\n";
+    let total = 0;
+    carrito.forEach(p => {
+        texto += `- ${p.titulo}: $${p.precio}\n`;
+        total += p.precio;
+    });
+    texto += `\n*Total: $${total}*`;
+
+    const urlWA = `https://wa.me/${TELEFONO_WHATSAPP}?text=${encodeURIComponent(texto)}`;
+    window.open(urlWA, '_blank');
+});
+
+// FUNCIONES ADMIN EDICION/BORRADO
 window.prepararEdicion = (id, titulo, precio) => {
     productoEditandoId = id;
     inputTitulo.value = titulo;
@@ -169,7 +218,6 @@ window.prepararEdicion = (id, titulo, precio) => {
     panelAdmin.classList.add('open');
 };
 
-// ELIMINAR PRODUCTO
 window.eliminarProducto = async (id) => {
     if (confirm("¿Estás seguro de eliminar esta publicación?")) {
         await db.collection("productos").doc(id).delete();
