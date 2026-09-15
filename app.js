@@ -17,7 +17,7 @@ let esAdmin = false;
 let productoEditandoId = null;
 let carrito = [];
 
-// Elementos DOM
+// DOM Elements
 const btnAbrirAdmin = document.getElementById('btn-abrir-admin');
 const btnCerrarAdmin = document.getElementById('btn-cerrar-admin');
 const panelAdmin = document.getElementById('panel-admin');
@@ -27,8 +27,9 @@ const inputTitulo = document.getElementById('input-titulo');
 const inputPrecio = document.getElementById('input-precio');
 const labelImagen = document.querySelector('.file-upload-label');
 const gridProductos = document.getElementById('grid-productos');
+const loadingSpinner = document.getElementById('loading-spinner');
 
-// Elementos Carrito
+// Carrito Elements
 const btnCarritoFlotante = document.getElementById('btn-carrito-flotante');
 const modalCarrito = document.getElementById('modal-carrito');
 const btnCerrarCarrito = document.getElementById('btn-cerrar-carrito');
@@ -37,7 +38,7 @@ const cartCountSpan = document.getElementById('cart-count');
 const cartTotalPriceSpan = document.getElementById('cart-total-price');
 const btnEnviarPedidoWA = document.getElementById('btn-enviar-pedido-wa');
 
-// GESTIÓN DEL PANEL ADMIN
+// GESTIÓN ADMIN
 btnAbrirAdmin.addEventListener('click', () => {
     if (!esAdmin) {
         const password = prompt("Ingrese la contraseña de administrador:");
@@ -63,7 +64,7 @@ inputImagen.addEventListener('change', () => {
     if(inputImagen.files.length > 0) labelImagen.innerText = "✅ Foto seleccionada";
 });
 
-// ABM PRODUCTOS
+// ALTA Y EDICION
 btnAgregar.addEventListener('click', async () => {
     const archivo = inputImagen.files[0];
     const titulo = inputTitulo.value.trim();
@@ -121,9 +122,10 @@ btnAgregar.addEventListener('click', async () => {
     }
 });
 
-// CARGAR CATALOGO
+// CARGA DE CATALOGO CON SPINNER
 function cargarProductos() {
     db.collection("productos").orderBy("fecha", "desc").onSnapshot((querySnapshot) => {
+        loadingSpinner.style.display = "none";
         gridProductos.innerHTML = "";
         
         if (querySnapshot.empty) {
@@ -150,7 +152,7 @@ function cargarProductos() {
                 <div class="product-info">
                     <h3 class="product-title">${p.titulo}</h3>
                     <p class="product-price">$${p.precio}</p>
-                    <button class="btn-add-cart" onclick="agregarAlCarrito('${p.titulo}', ${p.precio})">🛒 Agregar</button>
+                    <button class="btn-add-cart" onclick="agregarAlCarrito('${id}', '${p.titulo}', ${p.precio})">🛒 Agregar</button>
                 </div>
             `;
             gridProductos.appendChild(div);
@@ -158,33 +160,51 @@ function cargarProductos() {
     });
 }
 
-// LÓGICA DEL CARRITO
-window.agregarAlCarrito = (titulo, precio) => {
-    carrito.push({ titulo, precio });
+// CARRITO AGRUPADO CON CONTADORES
+window.agregarAlCarrito = (id, titulo, precio) => {
+    const existe = carrito.find(p => p.id === id);
+    if (existe) {
+        existe.cantidad += 1;
+    } else {
+        carrito.push({ id, titulo, precio, cantidad: 1 });
+    }
     actualizarCarritoUI();
 };
 
 function actualizarCarritoUI() {
-    cartCountSpan.innerText = carrito.length;
+    let cantidadTotal = 0;
+    let precioTotal = 0;
     cartItemsContainer.innerHTML = "";
-    let total = 0;
 
     carrito.forEach((prod, index) => {
-        total += prod.precio;
+        cantidadTotal += prod.cantidad;
+        precioTotal += prod.precio * prod.cantidad;
+
         const itemDiv = document.createElement('div');
         itemDiv.className = 'cart-item';
         itemDiv.innerHTML = `
-            <span>${prod.titulo} - $${prod.precio}</span>
-            <button onclick="quitarDelCarrito(${index})" style="border:none; background:none; cursor:pointer;">❌</button>
+            <div class="cart-item-info">
+                <strong>${prod.titulo}</strong>
+                <small>$${prod.precio} c/u</small>
+            </div>
+            <div class="cart-item-controls">
+                <button class="btn-qty" onclick="cambiarCantidad(${index}, -1)">-</button>
+                <span>${prod.cantidad}</span>
+                <button class="btn-qty" onclick="cambiarCantidad(${index}, 1)">+</button>
+            </div>
         `;
         cartItemsContainer.appendChild(itemDiv);
     });
 
-    cartTotalPriceSpan.innerText = total;
+    cartCountSpan.innerText = cantidadTotal;
+    cartTotalPriceSpan.innerText = precioTotal;
 }
 
-window.quitarDelCarrito = (index) => {
-    carrito.splice(index, 1);
+window.cambiarCantidad = (index, cambio) => {
+    carrito[index].cantidad += cambio;
+    if (carrito[index].cantidad <= 0) {
+        carrito.splice(index, 1);
+    }
     actualizarCarritoUI();
 };
 
@@ -199,8 +219,9 @@ btnEnviarPedidoWA.addEventListener('click', () => {
     let texto = "Hola, me gustaría encargar los siguientes productos:\n\n";
     let total = 0;
     carrito.forEach(p => {
-        texto += `- ${p.titulo}: $${p.precio}\n`;
-        total += p.precio;
+        const subtotal = p.precio * p.cantidad;
+        texto += `- ${p.titulo} x${p.cantidad}: $${subtotal}\n`;
+        total += subtotal;
     });
     texto += `\n*Total: $${total}*`;
 
@@ -208,7 +229,7 @@ btnEnviarPedidoWA.addEventListener('click', () => {
     window.open(urlWA, '_blank');
 });
 
-// FUNCIONES ADMIN EDICION/BORRADO
+// EDICION Y BORRADO
 window.prepararEdicion = (id, titulo, precio) => {
     productoEditandoId = id;
     inputTitulo.value = titulo;
