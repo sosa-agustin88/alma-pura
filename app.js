@@ -7,90 +7,117 @@ const firebaseConfig = {
     appId: "1:815859897172:web:d8bbe8158d439ed27f2ec1"
 };
 const IMGBB_API_KEY = "3052862c887588cf31e3baec2a6eb3f0";
-
-// CONFIGURA AQUÍ TU TELÉFONO DE WHATSAPP (con código de país)
-const TELEFONO_WHATSAPP = "5493644000000"; 
-const CLAVE_ADMIN = "1234"; // Cambia esta contraseña por la que quieras
+const TELEFONO_WHATSAPP = "5493644000000"; // Reemplaza por tu número
+const CLAVE_ADMIN = "1234"; 
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+let esAdmin = false;
+let productoEditandoId = null;
+
 const btnAbrirAdmin = document.getElementById('btn-abrir-admin');
 const btnCerrarAdmin = document.getElementById('btn-cerrar-admin');
 const panelAdmin = document.getElementById('panel-admin');
-
-// 1. CONTROL DE ACCESO CON CONTRASEÑA
-btnAbrirAdmin.addEventListener('click', () => {
-    const password = prompt("Ingrese la contraseña de administrador:");
-    if (password === CLAVE_ADMIN) {
-        panelAdmin.classList.add('open');
-    } else if (password !== null) {
-        alert("Contraseña incorrecta.");
-    }
-});
-
-btnCerrarAdmin.addEventListener('click', () => panelAdmin.classList.remove('open'));
-
-// 2. AGREGAR PRODUCTO
 const btnAgregar = document.getElementById('btn-agregar-producto');
 const inputImagen = document.getElementById('img-file');
 const inputTitulo = document.getElementById('input-titulo');
 const inputPrecio = document.getElementById('input-precio');
 const labelImagen = document.querySelector('.file-upload-label');
 
+// CONTROL DE ACCESO
+btnAbrirAdmin.addEventListener('click', () => {
+    if (!esAdmin) {
+        const password = prompt("Ingrese la contraseña de administrador:");
+        if (password === CLAVE_ADMIN) {
+            esAdmin = true;
+            btnAbrirAdmin.innerText = "⚙️ Panel Admin";
+            panelAdmin.classList.add('open');
+            cargarProductos();
+        } else if (password !== null) {
+            alert("Contraseña incorrecta.");
+        }
+    } else {
+        panelAdmin.classList.add('open');
+    }
+});
+
+btnCerrarAdmin.addEventListener('click', () => {
+    panelAdmin.classList.remove('open');
+    resetearFormulario();
+});
+
 inputImagen.addEventListener('change', () => {
     if(inputImagen.files.length > 0) labelImagen.innerText = "✅ Foto seleccionada";
 });
 
+// GUARDAR O EDITAR PRODUCTO
 btnAgregar.addEventListener('click', async () => {
     const archivo = inputImagen.files[0];
-    const titulo = inputTitulo.value;
-    const precio = inputPrecio.value;
+    const titulo = inputTitulo.value.trim();
+    const precio = inputPrecio.value.trim();
 
-    if (!archivo || !titulo || !precio) {
-        alert("Completa todos los campos y selecciona una imagen.");
+    if (!titulo || !precio) {
+        alert("Completa el título y el precio.");
         return;
     }
 
-    btnAgregar.innerText = "Subiendo imagen...";
+    btnAgregar.innerText = "Procesando...";
     btnAgregar.disabled = true;
 
     try {
-        const formData = new FormData();
-        formData.append("image", archivo);
-        
-        const respuestaImg = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-            method: "POST",
-            body: formData
-        });
-        const datosImg = await respuestaImg.json();
-        
-        if (!datosImg.success) throw new Error("Error en servidor de imágenes");
-        
-        await db.collection("productos").add({
-            titulo: titulo,
-            precio: Number(precio),
-            imagenUrl: datosImg.data.url,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        let urlImagen = null;
 
-        alert("¡Producto publicado correctamente!");
-        inputImagen.value = "";
-        labelImagen.innerText = "📸 Seleccionar foto";
-        inputTitulo.value = "";
-        inputPrecio.value = "";
+        if (archivo) {
+            const formData = new FormData();
+            formData.append("image", archivo);
+            const respuestaImg = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+            const datosImg = await respuestaImg.json();
+            if (datosImg.success) urlImagen = datosImg.data.url;
+        }
+
+        if (productoEditandoId) {
+            // MODO EDICIÓN
+            const datosActualizar = {
+                titulo: titulo,
+                precio: Number(precio)
+            };
+            if (urlImagen) datosActualizar.imagenUrl = urlImagen;
+
+            await db.collection("productos").doc(productoEditandoId).update(datosActualizar);
+            alert("¡Producto actualizado!");
+        } else {
+            // MODO CREACIÓN
+            if (!urlImagen) {
+                alert("Selecciona una imagen para el nuevo producto.");
+                btnAgregar.innerText = "Agregar Producto";
+                btnAgregar.disabled = false;
+                return;
+            }
+            await db.collection("productos").add({
+                titulo: titulo,
+                precio: Number(precio),
+                imagenUrl: urlImagen,
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("¡Producto publicado!");
+        }
+
+        resetearFormulario();
         panelAdmin.classList.remove('open');
         
     } catch (error) {
-        console.error("Error detallado:", error);
+        console.error("Error:", error);
         alert("Error al guardar: " + error.message);
     } finally {
-        btnAgregar.innerText = "Agregar Producto";
         btnAgregar.disabled = false;
     }
 });
 
-// 3. MOSTRAR TIENDA Y BOTÓN WHATSAPP
+// CARGAR PRODUCTOS EN TIENDA
 const gridProductos = document.getElementById('grid-productos');
 
 function cargarProductos() {
@@ -98,7 +125,7 @@ function cargarProductos() {
         gridProductos.innerHTML = ""; 
         
         if (querySnapshot.empty) {
-            gridProductos.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No hay productos cargados todavía.</p>";
+            gridProductos.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No hay productos disponibles.</p>";
             return;
         }
 
@@ -109,12 +136,17 @@ function cargarProductos() {
             const mensajeWA = encodeURIComponent(`Hola, me interesa encargar: ${producto.titulo} ($${producto.precio})`);
             const urlWA = `https://wa.me/${TELEFONO_WHATSAPP}?text=${mensajeWA}`;
 
+            const accionesAdminHTML = esAdmin ? `
+                <div class="admin-actions">
+                    <button class="btn-edit" onclick="prepararEdicion('${id}', '${producto.titulo}', ${producto.precio})">✏️</button>
+                    <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
+                </div>
+            ` : '';
+
             const div = document.createElement('div');
             div.className = 'product-card';
             div.innerHTML = `
-                <div class="admin-actions">
-                    <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
-                </div>
+                ${accionesAdminHTML}
                 <img src="${producto.imagenUrl}" alt="${producto.titulo}" class="product-img">
                 <div class="product-info">
                     <h3 class="product-title">${producto.titulo}</h3>
@@ -127,10 +159,30 @@ function cargarProductos() {
     });
 }
 
-async function eliminarProducto(id) {
-    if(confirm("¿Eliminar este producto?")) {
+// PREPARAR EDICIÓN
+window.prepararEdicion = (id, titulo, precio) => {
+    productoEditandoId = id;
+    inputTitulo.value = titulo;
+    inputPrecio.value = precio;
+    labelImagen.innerText = "📷 Cambiar foto (opcional)";
+    btnAgregar.innerText = "Guardar Cambios";
+    panelAdmin.classList.add('open');
+};
+
+// ELIMINAR PRODUCTO
+window.eliminarProducto = async (id) => {
+    if (confirm("¿Estás seguro de eliminar esta publicación?")) {
         await db.collection("productos").doc(id).delete();
     }
+};
+
+function resetearFormulario() {
+    productoEditandoId = null;
+    inputImagen.value = "";
+    inputTitulo.value = "";
+    inputPrecio.value = "";
+    labelImagen.innerText = "📸 Seleccionar foto";
+    btnAgregar.innerText = "Agregar Producto";
 }
 
 cargarProductos();
