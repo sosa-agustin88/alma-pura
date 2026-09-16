@@ -21,17 +21,13 @@ body {
   padding: 16px;
 }
 
-/* Header Centrado */
+/* Header Limpio con Banner (Altura duplicada) */
 .navbar {
     background-image: url('banner.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 15px 20px;
+    height: 280px; /* Altura duplicada */
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
