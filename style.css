@@ -6,7 +6,11 @@
 }
 
 body {
-    background-color: #f4f6f8;
+    background-image: url('fondo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: #333;
     padding-bottom: 80px;
 }
