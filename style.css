@@ -15,7 +15,7 @@ body {
     padding-bottom: 80px;
 }
 .product-card {
-  background-color: rgba(255, 255, 255, 0.85); /* Fondo blanco con 85% de opacidad */
+  background-color: rgba(255, 255, 255, 0.10); /* Fondo blanco con 85% de opacidad */
   backdrop-filter: blur(4px); /* Desenfoca levemente el fondo urbano detrás de la tarjeta */
   border-radius: 8px;
   padding: 16px;
