@@ -23,7 +23,10 @@ body {
 
 /* Header Centrado */
 .navbar {
-    background-color: #1a1a1a;
+    background-image: url('banner.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: #fff;
     display: flex;
     justify-content: center;
@@ -33,10 +36,14 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* Sombreado opcional para que el texto resalte mejor sobre la imagen */
 .logo-container {
     display: flex;
     align-items: center;
     gap: 10px;
+    background: rgba(0, 0, 0, 0.4); /* Fondo semi-transparente oscuro */
+    padding: 5px 15px;
+    border-radius: 8px;
 }
 
 .brand-logo {
