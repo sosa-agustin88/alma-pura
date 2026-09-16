@@ -7,7 +7,7 @@ const firebaseConfig = {
     appId: "1:815859897172:web:d8bbe8158d439ed27f2ec1"
 };
 const IMGBB_API_KEY = "3052862c887588cf31e3baec2a6eb3f0";
-const TELEFONO_WHATSAPP = "5493644000000"; // Reemplaza por tu número
+const TELEFONO_WHATSAPP = "5493725641328"; // Reemplaza por tu número
 const CLAVE_ADMIN = "1234";
 
 firebase.initializeApp(firebaseConfig);
