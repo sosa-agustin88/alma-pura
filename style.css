@@ -175,11 +175,17 @@ body {
     border-radius: 6px;
 }
 
-.btn-edit, .btn-del {
+.btn-share, .btn-edit, .btn-del {
     border: none;
     background: none;
     cursor: pointer;
     font-size: 0.9rem;
+    padding: 2px 4px;
+    transition: transform 0.1s ease;
+}
+
+.btn-share:hover, .btn-edit:hover, .btn-del:hover {
+    transform: scale(1.15);
 }
 
 /* Carrito Flotante */
