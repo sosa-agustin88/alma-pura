@@ -137,10 +137,10 @@ function cargarProductos() {
             const p = doc.data();
             const id = doc.id;
 
-            // ACA SE AGREGA EL BOTON DE COMPARTIR JUNTO A EDITAR Y ELIMINAR
+// ACA SE AGREGA EL BOTON DE COMPARTIR (AHORA CON LA IMAGEN)
             const accionesAdmin = esAdmin ? `
                 <div class="admin-actions">
-                    <button class="btn-share" onclick="compartirProducto('${p.titulo}', ${p.precio})" title="Compartir en redes">🔗</button>
+                    <button class="btn-share" onclick="compartirProducto('${p.titulo}', ${p.precio}, '${p.imagenUrl}')" title="Compartir en redes">🔗</button>
                     <button class="btn-edit" onclick="prepararEdicion('${id}', '${p.titulo}', ${p.precio})">✏️</button>
                     <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
                 </div>
