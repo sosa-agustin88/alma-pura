@@ -137,8 +137,10 @@ function cargarProductos() {
             const p = doc.data();
             const id = doc.id;
 
+            // ACA SE AGREGA EL BOTON DE COMPARTIR JUNTO A EDITAR Y ELIMINAR
             const accionesAdmin = esAdmin ? `
                 <div class="admin-actions">
+                    <button class="btn-share" onclick="compartirProducto('${p.titulo}', ${p.precio})" title="Compartir en redes">🔗</button>
                     <button class="btn-edit" onclick="prepararEdicion('${id}', '${p.titulo}', ${p.precio})">✏️</button>
                     <button class="btn-del" onclick="eliminarProducto('${id}')">🗑️</button>
                 </div>
@@ -253,5 +255,28 @@ function resetearFormulario() {
     labelImagen.innerText = "📸 Seleccionar foto";
     btnAgregar.innerText = "Agregar Producto";
 }
+
+// FUNCIONALIDAD COMPARTIR EN REDES Y ESTADOS
+window.compartirProducto = async (titulo, precio) => {
+    // Toma la URL actual de la página automáticamente
+    const urlTienda = window.location.href; 
+    const textoCompartir = `✨ ¡Mirá este producto en Alma Pura!\n📌 ${titulo} - $${precio}\n👉 Ingresá al catálogo completo acá:`;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: `${titulo} - Alma Pura`,
+                text: textoCompartir,
+                url: urlTienda
+            });
+        } catch (err) {
+            console.log("Compartir cancelado por el usuario.");
+        }
+    } else {
+        // Alternativa para navegadores de escritorio sin API de compartir
+        navigator.clipboard.writeText(`${textoCompartir} ${urlTienda}`);
+        alert("¡Enlace y texto copiados al portapapeles! Ya podés pegarlo en tus redes.");
+    }
+};
 
 cargarProductos();
