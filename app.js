@@ -277,20 +277,4 @@ window.compartirProducto = async (titulo, precio) => {
     }
 };
 
-    // Alternativa si el dispositivo no soporta enviar archivos
-    if (navigator.share) {
-        try {
-            await navigator.share({
-                title: `${titulo} - Alma Pura`,
-                text: textoCompartir,
-                url: urlTienda
-            });
-        } catch (err) {
-            console.log("Compartir cancelado.");
-        }
-    } else {
-        navigator.clipboard.writeText(`${textoCompartir}`);
-        alert("¡Enlace y texto copiados al portapapeles!");
-    }
-};
 cargarProductos();
