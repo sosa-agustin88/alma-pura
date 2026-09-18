@@ -256,28 +256,26 @@ function resetearFormulario() {
     btnAgregar.innerText = "Agregar Producto";
 }
 
-// FUNCIONALIDAD COMPARTIR EN REDES Y ESTADOS (CON IMAGEN FÍSICA Y URL AUTO)
-window.compartirProducto = async (titulo, precio, imagenUrl) => {
+// FUNCIONALIDAD ULTRA LIVIANA CON OPEN GRAPH
+window.compartirProducto = async (titulo, precio) => {
     const urlTienda = window.location.href;
     const textoCompartir = `✨ ¡Mirá este producto en Alma Pura!\n📌 ${titulo} - $${precio}\n👉 Catálogo completo acá: ${urlTienda}`;
 
-    try {
-        // Descarga la foto en segundo plano para adjuntarla
-        const response = await fetch(imagenUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'producto.jpg', { type: blob.type });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (navigator.share) {
+        try {
             await navigator.share({
                 title: `${titulo} - Alma Pura`,
                 text: textoCompartir,
-                files: [file] // Adjunta la foto física para el Estado
+                url: urlTienda
             });
-            return;
+        } catch (err) {
+            console.log("Compartir cancelado.");
         }
-    } catch (error) {
-        console.log("No se pudo adjuntar la foto, compartiendo solo texto...", error);
+    } else {
+        navigator.clipboard.writeText(textoCompartir);
+        alert("¡Enlace y texto copiados al portapapeles!");
     }
+};
 
     // Alternativa si el dispositivo no soporta enviar archivos
     if (navigator.share) {
