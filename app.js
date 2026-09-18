@@ -256,12 +256,30 @@ function resetearFormulario() {
     btnAgregar.innerText = "Agregar Producto";
 }
 
-// FUNCIONALIDAD COMPARTIR EN REDES Y ESTADOS
-window.compartirProducto = async (titulo, precio) => {
-    // Toma la URL actual de la página automáticamente
-    const urlTienda = window.location.href; 
-    const textoCompartir = `✨ ¡Mirá este producto en Alma Pura!\n📌 ${titulo} - $${precio}\n👉 Ingresá al catálogo completo acá:`;
+// FUNCIONALIDAD COMPARTIR EN REDES Y ESTADOS (CON IMAGEN FÍSICA Y URL AUTO)
+window.compartirProducto = async (titulo, precio, imagenUrl) => {
+    const urlTienda = window.location.href;
+    const textoCompartir = `✨ ¡Mirá este producto en Alma Pura!\n📌 ${titulo} - $${precio}\n👉 Catálogo completo acá: ${urlTienda}`;
 
+    try {
+        // Descarga la foto en segundo plano para adjuntarla
+        const response = await fetch(imagenUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'producto.jpg', { type: blob.type });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                title: `${titulo} - Alma Pura`,
+                text: textoCompartir,
+                files: [file] // Adjunta la foto física para el Estado
+            });
+            return;
+        }
+    } catch (error) {
+        console.log("No se pudo adjuntar la foto, compartiendo solo texto...", error);
+    }
+
+    // Alternativa si el dispositivo no soporta enviar archivos
     if (navigator.share) {
         try {
             await navigator.share({
@@ -270,13 +288,11 @@ window.compartirProducto = async (titulo, precio) => {
                 url: urlTienda
             });
         } catch (err) {
-            console.log("Compartir cancelado por el usuario.");
+            console.log("Compartir cancelado.");
         }
     } else {
-        // Alternativa para navegadores de escritorio sin API de compartir
-        navigator.clipboard.writeText(`${textoCompartir} ${urlTienda}`);
-        alert("¡Enlace y texto copiados al portapapeles! Ya podés pegarlo en tus redes.");
+        navigator.clipboard.writeText(`${textoCompartir}`);
+        alert("¡Enlace y texto copiados al portapapeles!");
     }
 };
-
 cargarProductos();
