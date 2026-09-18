@@ -256,11 +256,30 @@ function resetearFormulario() {
     btnAgregar.innerText = "Agregar Producto";
 }
 
-// FUNCIONALIDAD ULTRA LIVIANA CON OPEN GRAPH
-window.compartirProducto = async (titulo, precio) => {
+// FUNCIONALIDAD COMPARTIR CON FOTO Y ENLACE LIMPIO
+window.compartirProducto = async (titulo, precio, imagenUrl) => {
     const urlTienda = window.location.href;
     const textoCompartir = `✨ ¡Mirá este producto en Alma Pura!\n📌 ${titulo} - $${precio}\n👉 Catálogo completo acá: ${urlTienda}`;
 
+    try {
+        // Descarga la foto del producto para adjuntarla
+        const response = await fetch(imagenUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'producto.jpg', { type: blob.type });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                title: `${titulo} - Alma Pura`,
+                text: textoCompartir,
+                files: [file]
+            });
+            return;
+        }
+    } catch (error) {
+        console.log("No se pudo adjuntar la foto, enviando solo texto...", error);
+    }
+
+    // Alternativa si el dispositivo no soporta enviar archivos
     if (navigator.share) {
         try {
             await navigator.share({
